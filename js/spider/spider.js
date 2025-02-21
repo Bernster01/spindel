@@ -77,12 +77,19 @@ export class SpiderManager {
             fillColor: 'rgba(0, 0, 255, 0.3)'
         };
         this.mode = 'normal';
+        this.downloadButton = document.createElement('button');
+        this.downloadButton.innerHTML = 'Download Image';
+        this.downloadButton.onclick = () => {
+            this.downloadCanvasAsImg();
+        };
+        this.container.appendChild(this.downloadButton);
     }
     init() {
         this.drawGraph(this.getCombinedGraph());
         const css = `¨
         #${this.canvas.id}{
             border: 1px solid black;
+            background-color: white;
         }
         #${this.selector.id}{
             margin-bottom: 10px;
@@ -96,6 +103,17 @@ export class SpiderManager {
         const style = document.createElement('style');
         style.innerHTML = css;
         document.head.appendChild(style);
+    }
+    getCanvasAsImg() {
+        const img = document.createElement('img');
+        img.src = this.canvas.toDataURL();
+        return img;
+    }
+    downloadCanvasAsImg() {
+        const a = document.createElement('a');
+        a.href = this.canvas.toDataURL();
+        a.download = 'spider_graph.png';
+        a.click();
     }
     setSettings(settings) {
         this.settings = settings;
