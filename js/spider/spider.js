@@ -74,7 +74,12 @@ export class SpiderManager {
             textColor: 'black',
             baselineThickness: 1,
             fill: true,
-            fillColor: 'rgba(0, 0, 255, 0.3)'
+            fillColor: 'rgba(0, 0, 255, 0.3)',
+            fillOpacity: 0.75,
+            gradient: false,
+            gradientColors: [],
+            gradientColorsStep: false,
+            gradientColorsStepValues: []
         };
         this.mode = 'normal';
         this.downloadButton = document.createElement('button');
@@ -279,7 +284,7 @@ export class SpiderManager {
         ctx.textBaseline = 'middle';
         ctx.fillStyle = 'black';
         const y = centerY - (radius * 1.5);
-        ctx.fillText(this.currentGraph.name, centerX,y);
+        ctx.fillText(this.currentGraph.name, centerX, y);
 
         ctx.closePath();
     }
@@ -321,6 +326,7 @@ export class SpiderManager {
 
                 positions.push({ x, y });
             }
+            
             // **Fill the shape inside the lines**
             if (fill) {
                 ctx.beginPath();
@@ -334,7 +340,52 @@ export class SpiderManager {
                 }
             }
             ctx.closePath();
-            ctx.fillStyle = fillColor // Light blue fill with transparency
+            if(this.settings.gradient){
+                // **Create a radial gradient (Red in center, Green at edges)**
+                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+                for (const i in this.settings.gradientColors) {
+                    let color = this.settings.gradientColors[i];
+                    let opacity = this.settings.fillOpacity;
+                    //convert hex or string to rgba
+                    if (color.startsWith('#')) {
+                        color = color.replace('#', '');
+                        const r = parseInt(color.substring(0, 2), 16);
+                        const g = parseInt(color.substring(2, 4), 16);
+                        const b = parseInt(color.substring(4, 6), 16);
+                        color = `rgba(${r},${g},${b},${opacity})`;
+                    }
+                    else if (color.startsWith('rgb')) {
+                        color = color.replace('rgb', 'rgba').replace(')', `,${opacity})`);
+                    }
+                    else if (color.startsWith('hsl')) {
+                        color = color.replace('hsl', 'hsla').replace(')', `,${opacity})`);
+                    }
+                    else{
+                        //convert color name to rgba
+                        const tmpCanvas = document.createElement('canvas');
+                        const tempCtx = tmpCanvas.getContext('2d');
+                        tempCtx.fillStyle = color;
+                        tempCtx.fillRect(0, 0, 1, 1);
+                        const rgba = tempCtx.getImageData(0, 0, 1, 1).data;
+                        color = `rgba(${rgba[0]},${rgba[1]},${rgba[2]},${opacity})`;
+                    }
+
+                    console.log(color);
+                    let stop;
+                    if(this.settings.gradientColorsStep){
+                        stop = this.settings.gradientColorsStepValues[i];
+                    }
+                    else{
+                        stop = i / this.settings.gradientColors.length;
+                    }
+                    gradient.addColorStop(stop, color);
+                }
+                ctx.fillStyle = gradient // Light blue fill with transparency
+            }else{
+                ctx.fillStyle = fillColor;
+            }
+
+            
             ctx.fill();
             // **Draw lines first (under dots)**
             ctx.beginPath();
